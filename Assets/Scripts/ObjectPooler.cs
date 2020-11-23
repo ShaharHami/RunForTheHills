@@ -3,70 +3,85 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 public class ObjectPooler : MonoBehaviour
 {
-    public Transform objectToPool;
-    public int prewarm;
-    public bool expand;
-    [HideInInspector] public float zSize, xSize;
-    [HideInInspector] public float _lastTileZ, _firstTileZ;
-    public List<Transform> Pool;
-    private MovePlayer _player;
-    
+    public static ObjectPooler Instance;
+    public List<Pool> pools;
+    internal Dictionary<string, List<Transform>> _pools;
+
     private void Awake()
     {
-        zSize = objectToPool.GetComponent<Tile>().gameTile.transform.localScale.z;
-        xSize = objectToPool.GetComponent<Tile>().gameTile.transform.localScale.x;
-        Pool = new List<Transform>();
-        _player = FindObjectOfType<MovePlayer>();
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+        }
+        else
+        {
+            Instance = this;
+            DontDestroyOnLoad(this);
+        }
+
+        _pools = new Dictionary<string, List<Transform>>();
     }
 
     void Start()
     {
-        if (prewarm > 0)
+        foreach (var pool in pools)
         {
-            StartCoroutine(PreWarm());
+            _pools[pool.name] = new List<Transform>();
+            if (pool.prewarm > 0)
+            {
+                StartCoroutine(PreWarm(pool.prewarm, pool.name));
+            }
         }
     }
 
-    private IEnumerator PreWarm()
+    private IEnumerator PreWarm(int prewarm, string objectToPrewarm)
     {
         for (int i = 0; i < prewarm; i++)
         {
-            var t = SpawnFromPool();
-            t.position = new Vector3(0, 0, i * zSize);
+            var t = SpawnFromPool(objectToPrewarm);
             t.parent = transform;
-            if (i == 0)
-            {
-                _firstTileZ = t.position.z;
-            }
-            if (i == prewarm-1)
-            {
-                _lastTileZ = t.position.z;
-            }
+            t.gameObject.SetActive(false);
             yield return null;
         }
     }
 
-    public Transform SpawnFromPool()
+    public Transform SpawnFromPool(string objectToGet)
     {
-        if (Pool.Count > 0)
+        var thisPool = new Pool();
+        foreach (var t in pools.Where(t => t.name == objectToGet))
         {
-            foreach (var obj in Pool.Where(obj => !obj.gameObject.activeSelf))
+            thisPool = t;
+        }
+        var p = _pools[objectToGet];
+        if (p.Count >= thisPool.prewarm)
+        {
+            foreach (var obj in p.Where(obj => !obj.gameObject.activeSelf))
             {
                 obj.gameObject.SetActive(true);
                 return obj;
             }
         }
-        if (expand)
+
+        if (thisPool.expand)
         {
-            var obj = Instantiate(objectToPool).transform;
-            Pool.Add(obj);
+            if (thisPool.objectToPool == null) return null;
+            var obj = Instantiate(thisPool.objectToPool);
+            p.Add(obj);
             return obj;
         }
 
         return null;
+    }
+
+    [Serializable]
+    public class Pool
+    {
+        public string name;
+        public Transform objectToPool;
+        public int prewarm;
+        public bool expand;
     }
 }
