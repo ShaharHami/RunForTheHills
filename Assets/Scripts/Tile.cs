@@ -8,6 +8,7 @@ public class Tile : MonoBehaviour
     public static float tileX;
     public string[] obstacleNames;
     public string[] pickupNames;
+    public Transform fog;
     private float _pickupProbability;
     private float _specialPickupDivider;
 

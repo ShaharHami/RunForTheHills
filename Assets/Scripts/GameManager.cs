@@ -17,6 +17,7 @@ public class GameManager : MonoBehaviour
 
     private void Awake()
     {
+        Application.targetFrameRate = 60;
         _roadManager = FindObjectOfType<RoadManager>();
         _player = FindObjectOfType<MovePlayer>();
     }
@@ -41,7 +42,7 @@ public class GameManager : MonoBehaviour
             }
             if (_player.speed > 0 && _player.speed < maxPlayerSpeed)
             {
-                _player.speed += tileObstacleSpawnIncrement;
+                _player.speed += speedIncrement;
             }
 
             _previousIncreasePassed = increasePassed;

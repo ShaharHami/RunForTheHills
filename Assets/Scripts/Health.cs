@@ -3,6 +3,7 @@ using UnityEngine;
 
 public class Health : MonoBehaviour
 {
+    public static bool dead = false;
     public int lives;
     private MovePlayer _player;
     private UIManager _uiManager;
@@ -26,14 +27,17 @@ public class Health : MonoBehaviour
     {
         lives--;
         _uiManager.healthDisplay.text = lives.ToString();
+        AudioManager.Instance.PlaySfx("Hit");
         if (lives <= 0)
         {
             HandleDeath();
+            AudioManager.Instance.PlaySfx("Death");
         }
     }
 
     private void HandleDeath()
     {
         _player.speed = 0;
+        dead = true;
     }
 }

@@ -16,6 +16,7 @@ public class MovePlayer : MonoBehaviour
     private float _tileSizeZ, _tileSizeX;
     private float _blend = 0f;
     private int _direction;
+    private Coroutine _pauseCoroutine;
 
     private void OnEnable()
     {
@@ -36,36 +37,51 @@ public class MovePlayer : MonoBehaviour
         if (!_inputOk) return;
         
         
-        if (Grounded() && Input.GetKeyDown(KeyCode.LeftArrow))
+        if (Input.GetKeyDown(KeyCode.LeftArrow))
         {
-            _direction = -1;
-            HandleStrafe();
+            StrafeLeft();
         }
 
-        else if (Grounded() && Input.GetKeyDown(KeyCode.RightArrow))
+        else if (Input.GetKeyDown(KeyCode.RightArrow))
         {
-            _direction = 1;
-            HandleStrafe();
+            StrafeRight();
         }
         
-
-        if (Grounded() && Input.GetButtonDown("Fire1"))
+        if (Input.GetButtonDown("Fire1"))
         {
-            StartCoroutine(InputPause(jumpDuration));
-            if (transform.position.x == 0 || transform.position.x == -1 || transform.position.x == 1)
-            {
-                var pos = new Vector3(
-                    transform.position.x,
-                    0,
-                    transform.position.z + (speed * jumpDuration)
-                );
-                bool jump2 = Random.Range(0f, 1f) > 0.5f;
-                transform.DOJump(pos, jump2 ? jumpPower+0.5f : jumpPower, 1, jumpDuration).SetEase(Ease.Linear);
-                animator.SetTrigger(jump2 ? "Jump" : "Jump2");
-            }
+            Jump();
         }
     }
 
+    public void Jump()
+    {
+        if (!Grounded()) return;
+        _pauseCoroutine = StartCoroutine(MomentaryPause(jumpDuration));
+        if (transform.position.x == 0 || transform.position.x == -1 || transform.position.x == 1)
+        {
+            var pos = new Vector3(
+                transform.position.x,
+                0,
+                transform.position.z + (speed * jumpDuration)
+            );
+            bool jump2 = Random.Range(0f, 1f) > 0.5f;
+            AudioManager.Instance.PlaySfx("Jump");
+            transform.DOJump(pos, jumpPower, 1, jumpDuration).SetEase(Ease.Linear);
+            animator.SetTrigger("Jump2");
+        }
+    }
+    public void StrafeRight()
+    {
+        if (!Grounded()) return;
+        _direction = 1;
+        HandleStrafe();
+    }
+    public void StrafeLeft()
+    {
+        if (!Grounded()) return;
+        _direction = -1;
+        HandleStrafe();
+    }
     private void HandleStrafe()
     {
         if (transform.position.x == 0 || transform.position.x == _tileSizeX * -_direction)
@@ -73,6 +89,7 @@ public class MovePlayer : MonoBehaviour
             StartCoroutine(InputPause(lateralMovementDuration));
             transform.DOMoveX(transform.position.x + _tileSizeX * _direction,
                 lateralMovementDuration);
+            AudioManager.Instance.PlaySfx("Strafe");
             DOTween.To(() => _blend, x => _blend = x, _direction, lateralMovementDuration / 2).OnComplete(() =>
             {
                 DOTween.To(() => _blend, x => _blend = x, 0f, lateralMovementDuration / 2);
@@ -86,12 +103,13 @@ public class MovePlayer : MonoBehaviour
         if (!Grounded())
         {
             animator.SetTrigger("Ouch");
-            StartCoroutine(MomentaryPause(GetClipLength("Ouch")));
+            StopCoroutine(_pauseCoroutine);
+            _pauseCoroutine = StartCoroutine(MomentaryPause(GetClipLength("Ouch"), true));
         }
         else
         {
             animator.SetTrigger("Ouch2");
-            StartCoroutine(MomentaryPause(GetClipLength("Ouch2")));
+            _pauseCoroutine = StartCoroutine(MomentaryPause(GetClipLength("Ouch2"), true));
         }
     }
 
@@ -109,14 +127,22 @@ public class MovePlayer : MonoBehaviour
         return 0f;
     }
 
-    private IEnumerator MomentaryPause(float pauseDuration)
+    private IEnumerator MomentaryPause(float pauseDuration, bool stop = false)
     {
         _inputOk = false;
         var cacheSpeed = speed;
-        speed = 0;
+        if (stop)
+        { 
+            speed = 0;
+        }
+        AudioManager.Instance.ToggleFootSteps(false);
         yield return new WaitForSeconds(pauseDuration);
-        speed = cacheSpeed;
+        AudioManager.Instance.ToggleFootSteps(true);
         _inputOk = true;
+        if (stop)
+        {
+            speed = cacheSpeed;
+        }
     }
 
     private IEnumerator InputPause(float pauseDuration)
@@ -127,6 +153,6 @@ public class MovePlayer : MonoBehaviour
     }
     public bool Grounded()
     {
-        return transform.position.y == 0;
+        return transform.position.y <= 0;
     }
 }

@@ -41,7 +41,7 @@ public class RoadManager : MonoBehaviour
         if (_lastTileZ != 0 && _player.transform.position.z >= (_lastTileZ - _player.minDistanceFront))
         {
             var obj = ObjectPooler.Instance.SpawnFromPool(TileTypeByProgress(_tileCount));
-            obj.position = new Vector3(0, 0, _lastTileZ + _tileSizeZ);
+            obj.position = new Vector3(0, -0.2f, _lastTileZ + _tileSizeZ);
             obj.parent = transform;
             PlaceObstacles(obj);
             _lastTileZ += _tileSizeZ;
@@ -58,7 +58,7 @@ public class RoadManager : MonoBehaviour
         }
         
     }
-
+    
     private IEnumerator PreWarm()
     {
         for (int i = 0; i < initialTiles; i++)
@@ -66,7 +66,7 @@ public class RoadManager : MonoBehaviour
             var tileType = TileTypeByProgress(i);
             var t = ObjectPooler.Instance.SpawnFromPool(tileType);
 
-            t.position = new Vector3(0, 0, i * _tileSizeZ);
+            t.position = new Vector3(0, -0.2f, i * _tileSizeZ);
             t.parent = transform;
             if (i == 0)
             {

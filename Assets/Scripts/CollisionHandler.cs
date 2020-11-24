@@ -14,8 +14,11 @@ public class CollisionHandler : MonoBehaviour
 
         if (other.CompareTag("Coin"))
         {
-            CoinHit?.Invoke(other.GetComponent<Coin>().value);
+            var coin = other.GetComponent<Coin>();
+            CoinHit?.Invoke(coin.value);
             other.gameObject.SetActive(false);
+            AudioManager.Instance.PlaySfx(coin.gem ? "Gem" : "Coin");
+            FXManager.Instance.PlayFX(coin.gem ? "GemFX" : "CoinFX", coin.transform.position);
         }
     }
     
