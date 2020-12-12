@@ -19,6 +19,7 @@ public class CollisionHandler : MonoBehaviour
             other.gameObject.SetActive(false);
             AudioManager.Instance.PlaySfx(coin.gem ? "Gem" : "Coin");
             FXManager.Instance.PlayFX(coin.gem ? "GemFX" : "CoinFX", coin.transform.position);
+            FXManager.Instance.PlayFX("ValueFX", coin.transform.position + new Vector3(0,0.2f,0), $"+{coin.value}");
         }
     }
     

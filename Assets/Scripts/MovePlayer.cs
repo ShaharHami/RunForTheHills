@@ -12,7 +12,9 @@ public class MovePlayer : MonoBehaviour
     public float lateralMovementDuration;
     public float jumpPower, jumpDuration;
     public Animator animator;
-    private bool _inputOk;
+    public CollisionHandler collisionHandler;
+    private Collider _playerCollider;
+    private bool _inputOk, _gameStarted;
     private float _tileSizeZ, _tileSizeX;
     private float _blend = 0f;
     private int _direction;
@@ -22,16 +24,32 @@ public class MovePlayer : MonoBehaviour
     {
         CollisionHandler.ObstacleHit += HandleObstacleHit;
     }
+    private void OnDisable()
+    {
+        CollisionHandler.ObstacleHit -= HandleObstacleHit;
+    }
 
     private void Start()
     {
+        animator.StopPlayback();
+        _gameStarted = false;
         _tileSizeZ = Tile.tileZ;
         _tileSizeX = Tile.tileX;
+        Health.dead = false;
+        _playerCollider = collisionHandler.GetComponent<Collider>();
+    }
+
+    public void StartMoving()
+    {
+        _gameStarted = true;
         _inputOk = true;
+        animator.SetBool("GameStarted", true);
+        AudioManager.Instance.StartFootsteps();
     }
     
     void Update()
     {
+        if (!_gameStarted) return;
         transform.position += new Vector3(0, 0, speed * Time.deltaTime);
         animator.SetFloat("Blend", _blend);
         if (!_inputOk) return;
@@ -55,7 +73,8 @@ public class MovePlayer : MonoBehaviour
 
     public void Jump()
     {
-        if (!Grounded()) return;
+        if (!Grounded() || !_inputOk) return;
+        _inputOk = false;
         _pauseCoroutine = StartCoroutine(MomentaryPause(jumpDuration));
         if (transform.position.x == 0 || transform.position.x == -1 || transform.position.x == 1)
         {
@@ -72,13 +91,13 @@ public class MovePlayer : MonoBehaviour
     }
     public void StrafeRight()
     {
-        if (!Grounded()) return;
+        if (!Grounded() || !_inputOk) return;
         _direction = 1;
         HandleStrafe();
     }
     public void StrafeLeft()
     {
-        if (!Grounded()) return;
+        if (!Grounded() || !_inputOk) return;
         _direction = -1;
         HandleStrafe();
     }
@@ -86,7 +105,6 @@ public class MovePlayer : MonoBehaviour
     {
         if (transform.position.x == 0 || transform.position.x == _tileSizeX * -_direction)
         {
-            StartCoroutine(InputPause(lateralMovementDuration));
             transform.DOMoveX(transform.position.x + _tileSizeX * _direction,
                 lateralMovementDuration);
             AudioManager.Instance.PlaySfx("Strafe");
@@ -99,20 +117,36 @@ public class MovePlayer : MonoBehaviour
 
     private void HandleObstacleHit(Collider collider)
     {
+        _inputOk = false;
+        speed = 0;
         animator.SetBool("Grounded", Grounded());
         if (!Grounded())
         {
             animator.SetTrigger("Ouch");
-            StopCoroutine(_pauseCoroutine);
+            if (_pauseCoroutine != null)
+            {
+                StopCoroutine(_pauseCoroutine);
+            }
+            _inputOk = false;
             _pauseCoroutine = StartCoroutine(MomentaryPause(GetClipLength("Ouch"), true));
         }
         else
         {
             animator.SetTrigger("Ouch2");
+            if (_pauseCoroutine != null)
+            {
+                StopCoroutine(_pauseCoroutine);
+            }
+            _inputOk = false;
             _pauseCoroutine = StartCoroutine(MomentaryPause(GetClipLength("Ouch2"), true));
         }
     }
 
+    public void HandleDeath()
+    {
+        animator.SetBool("Dead", Health.dead);
+    }
+    
     private float GetClipLength(string clipName)
     {
         AnimationClip[] clips = animator.runtimeAnimatorController.animationClips;
@@ -137,6 +171,10 @@ public class MovePlayer : MonoBehaviour
         }
         AudioManager.Instance.ToggleFootSteps(false);
         yield return new WaitForSeconds(pauseDuration);
+        if (Health.dead)
+        {
+            yield break;
+        }
         AudioManager.Instance.ToggleFootSteps(true);
         _inputOk = true;
         if (stop)
@@ -154,5 +192,10 @@ public class MovePlayer : MonoBehaviour
     public bool Grounded()
     {
         return transform.position.y <= 0;
+    }
+
+    public void ToggleMovement(bool move)
+    {
+        _inputOk = move;
     }
 }

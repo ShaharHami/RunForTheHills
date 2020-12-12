@@ -3,6 +3,7 @@ using UnityEngine;
 
 public class UIManager : MonoBehaviour
 {
-    public TextMeshProUGUI healthDisplay;
     public TextMeshProUGUI scoreDisplay;
+    public TextMeshProUGUI countDownDisplay;
+    public TextMeshProUGUI speedDisplay;
 }

@@ -32,6 +32,17 @@ public class AudioManager : MonoBehaviour
 
     private void Start()
     {
+        bgmSource.Play();
+    }
+
+    public void StartFootsteps()
+    {
+        if (stepsCoroutine != null)
+        {
+            StopCoroutine(stepsCoroutine);
+        }
+
+        hit = false;
         stepsCoroutine = StartCoroutine(PlayFootSteps());
     }
 
@@ -61,12 +72,15 @@ public class AudioManager : MonoBehaviour
             }
         }
     }
-    
-    public IEnumerator PlayFootSteps()
+
+    private IEnumerator PlayFootSteps()
     {
-        while (!Health.dead && !hit)
+        while (true)
         {
-            stepsSource.PlayOneShot(footSteps[Random.Range(0, footSteps.Count)]);
+            if (!Health.dead && !hit)
+            {
+                stepsSource.PlayOneShot(footSteps[Random.Range(0, footSteps.Count)]);
+            }
             yield return new WaitForSeconds(delayBetweenSteps);
         }
     }
@@ -74,16 +88,8 @@ public class AudioManager : MonoBehaviour
     public void ToggleFootSteps(bool on)
     {
         hit = !on;
-        if (on)
-        {
-            stepsCoroutine = StartCoroutine(PlayFootSteps());
-        }
-        else
-        {
-            StopCoroutine(stepsCoroutine);
-        }
     }
-    
+
     [Serializable]
     public class AudioSample
     {

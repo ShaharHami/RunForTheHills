@@ -19,7 +19,6 @@ public class ObjectPooler : MonoBehaviour
         else
         {
             Instance = this;
-            DontDestroyOnLoad(this);
         }
 
         _pools = new Dictionary<string, List<Transform>>();

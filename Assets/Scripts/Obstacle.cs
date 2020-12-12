@@ -2,27 +2,31 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class Obstacle : MonoBehaviour
 {
     public Transform specialPickUp;
     public Transform effect;
-    private MeshRenderer _renderer;
+    public MeshRenderer obstacleRenderer;
+    private Collider _collider;
 
     private void Awake()
     {
-        _renderer = GetComponent<MeshRenderer>();
+        _collider = GetComponent<Collider>();
     }
 
     private void OnEnable()
     {
         CollisionHandler.ObstacleHit += HandleObstacleHit;
         effect.gameObject.SetActive(false);
-        _renderer.enabled = true;
+        obstacleRenderer.enabled = true;
+        _collider.enabled = true;
     }
 
     private void OnDisable()
     {
+        CollisionHandler.ObstacleHit -= HandleObstacleHit;
         specialPickUp.gameObject.SetActive(false);
     }
 
@@ -30,7 +34,8 @@ public class Obstacle : MonoBehaviour
     {
         if (collider.gameObject == gameObject)
         {
-            _renderer.enabled = false;
+            _collider.enabled = false;
+            obstacleRenderer.enabled = false;
             effect.gameObject.SetActive(true);
         }
     }

@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Serialization;
 
 public class FXManager : MonoBehaviour
 {
     public static FXManager Instance;
-    [FormerlySerializedAs("_killTimeOut")] public float killTimeOut;
+    public float killTimeOut;
 
     private void Awake()
     {
@@ -22,17 +23,29 @@ public class FXManager : MonoBehaviour
         }
     }
 
-    public void PlayFX(string fx, Vector3 pos)
+    public void PlayFX(string fx, Vector3 pos, string value = null)
     {
-        StartCoroutine(KillTimer(fx, pos));
+        StartCoroutine(KillTimer(fx, pos, value));
     }
 
-    private IEnumerator KillTimer(string fx, Vector3 pos)
+    private IEnumerator KillTimer(string fx, Vector3 pos, string value)
     {
         var fxGo = ObjectPooler.Instance.SpawnFromPool(fx);
         fxGo.position = pos;
+        if (value != null)
+        {
+            var txt = fxGo.GetComponent<TextMeshPro>();
+            if (txt != null)
+            {
+                txt.text = value;
+            }
+        }
         yield return new WaitForSeconds(killTimeOut);
         fxGo.gameObject.SetActive(false);
     }
 
+    public void StopFX()
+    {
+        StopAllCoroutines();
+    }
 }
