@@ -562,6 +562,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: SayolloScreen
       objectReference: {fileID: 0}
+    - target: {fileID: 3284196322452800324, guid: 8d8c9daba711a4995991d6e41198b99d,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 3284196322452800344, guid: 8d8c9daba711a4995991d6e41198b99d,
         type: 3}
       propertyPath: m_LocalPosition.x
